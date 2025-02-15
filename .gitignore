@@ -1,0 +1,47 @@
+# Ignore arquivos de build
+target/
+build/
+bin/
+out/
+
+# Ignore arquivos de IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Ignore arquivos de log
+*.log
+logs/
+
+# Ignore arquivos de dependências
+*.jar
+*.war
+*.zip
+*.tar
+*.tar.gz
+
+# Ignore arquivos de configuração local
+application-local.properties
+.env
+
+# Ignore arquivos do Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Ignore arquivos do Gradle
+.gradle/
+gradle/
+gradlew
+gradlew.bat
+
+# Ignore arquivos do Docker
+docker-compose.yml
+Dockerfile
+
+# Ignore arquivos do Git
+.gitignore
+.gitattributes
