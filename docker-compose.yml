@@ -1,0 +1,59 @@
+services:
+  # Customer Database
+  customer-db:
+    image: mysql:8.0
+    container_name: customer-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${CUSTOMER_DB_NAME}
+      MYSQL_USER: ${CUSTOMER_DB_USER}
+      MYSQL_PASSWORD: ${CUSTOMER_DB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - D:/cursos/Java/Rasmoo/ScheduleProject-DB/customer_db:/var/lib/mysql
+    networks:
+      - backend-network
+    profiles:
+      - databases
+
+  # Scheduling Database
+  scheduling-db:
+    image: mysql:8.0
+    container_name: scheduling-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${SCHEDULING_DB_NAME}
+      MYSQL_USER: ${SCHEDULING_DB_USER}
+      MYSQL_PASSWORD: ${SCHEDULING_DB_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - D:/cursos/Java/Rasmoo/ScheduleProject-DB/scheduling_db:/var/lib/mysql
+    networks:
+      - backend-network
+    profiles:
+      - databases
+
+  # User Database
+  user-db:
+    image: mysql:8.0
+    container_name: user-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${USER_DB_NAME}
+      MYSQL_USER: ${USER_DB_USER}
+      MYSQL_PASSWORD: ${USER_DB_PASSWORD}
+    ports:
+      - "3308:3306"
+    volumes:
+      - D:/cursos/Java/Rasmoo/ScheduleProject-DB/user_db:/var/lib/mysql
+    networks:
+      - backend-network
+    profiles:
+      - databases
+
+# Rede para comunicação entre os containers
+networks:
+  backend-network:
+    driver: bridge
