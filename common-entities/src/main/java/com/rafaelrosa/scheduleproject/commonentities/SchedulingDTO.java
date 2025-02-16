@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SchedulingDTO {
 
+    private Long id;
     private LocalDateTime startTime;
     private String description;
     private SchedulingStatus status; //ENUM de Possíveis Status (CANCELED, CONFIRMED, SENT, etc)
