@@ -1,8 +1,11 @@
+version: '3.8'
+
 services:
   # Customer Database
   customer-db:
     image: mysql:8.0
     container_name: customer-db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${CUSTOMER_DB_NAME}
@@ -11,16 +14,22 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - D:/cursos/Java/Rasmoo/ScheduleProject-DB/customer_db:/var/lib/mysql
+      - scheduling-project-customer-db:/var/lib/mysql
     networks:
       - backend-network
     profiles:
       - databases
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
   # Scheduling Database
   scheduling-db:
     image: mysql:8.0
     container_name: scheduling-db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${SCHEDULING_DB_NAME}
@@ -29,16 +38,22 @@ services:
     ports:
       - "3307:3306"
     volumes:
-      - D:/cursos/Java/Rasmoo/ScheduleProject-DB/scheduling_db:/var/lib/mysql
+      - scheduling-project-scheduling-db:/var/lib/mysql
     networks:
       - backend-network
     profiles:
       - databases
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
   # User Database
   user-db:
     image: mysql:8.0
     container_name: user-db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${USER_DB_NAME}
@@ -47,13 +62,24 @@ services:
     ports:
       - "3308:3306"
     volumes:
-      - D:/cursos/Java/Rasmoo/ScheduleProject-DB/user_db:/var/lib/mysql
+      - scheduling-project-user-db:/var/lib/mysql
     networks:
       - backend-network
     profiles:
       - databases
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
 
 # Rede para comunicação entre os containers
 networks:
   backend-network:
     driver: bridge
+
+# Volumes nomeados para persistência de dados
+volumes:
+  scheduling-project-customer-db:
+  scheduling-project-scheduling-db:
+  scheduling-project-user-db:

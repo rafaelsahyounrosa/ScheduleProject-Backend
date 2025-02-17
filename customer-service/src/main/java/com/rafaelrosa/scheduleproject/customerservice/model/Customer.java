@@ -5,13 +5,14 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.Date;
 
 @Entity
 @Table(name = "customers")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Customer extends CustomerDTO {
+public class Customer extends CustomerDTO implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

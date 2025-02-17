@@ -13,7 +13,7 @@ import java.time.LocalDate;
 public class ReminderDTO {
 
     private Long id;
-    private CustomerDTO customer;
+    private Long customerId;
     private SchedulingDTO scheduling;
     private LocalDate dateToSendReminder;
     private String reminderText;
