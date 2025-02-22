@@ -16,5 +16,5 @@ public class SchedulingDTO {
     private LocalDateTime startTime;
     private String description;
     private SchedulingStatus status; //ENUM de Possíveis Status (CANCELED, CONFIRMED, SENT, etc)
-    private CustomerDTO customer;
+    private Long customerId;
 }

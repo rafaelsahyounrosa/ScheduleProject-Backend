@@ -25,6 +25,7 @@ logs/
 
 # Ignore arquivos de configuração local
 application-local.properties
+application-secrets.properties
 .env
 
 # Ignore arquivos do Maven
