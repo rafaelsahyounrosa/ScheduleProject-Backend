@@ -4,6 +4,9 @@ import com.rafaelrosa.scheduleproject.customerservice.model.Customer;
 import com.rafaelrosa.scheduleproject.customerservice.repository.CustomerRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Optional;
+
 @Service
 public class CustomerService {
 
@@ -13,8 +16,8 @@ public class CustomerService {
         this.customerRepository = customerRepository;
     }
 
-    public void saveCustomer(Customer customer){
-        customerRepository.save(customer);
+    public Customer saveCustomer(Customer customer){
+        return customerRepository.save(customer);
     }
 
     public Customer getCustomerById(Long id){
@@ -29,17 +32,24 @@ public class CustomerService {
         return customerRepository.findAll();
     }
 
-    public void updateCustomer(Customer customer){
-        var dbCustomer = getCustomerById(customer.getId());
-
-        if(dbCustomer != null){
-            dbCustomer.setFirstName(customer.getFirstName());
-            dbCustomer.setLastName(customer.getLastName());
-            dbCustomer.setEmail(customer.getEmail());
-            dbCustomer.setPhone(customer.getPhone());
-            dbCustomer.setAddress(customer.getAddress());
-            saveCustomer(dbCustomer);
+    public Customer updateCustomer(Long idURL, Customer customer){
+        if(idURL == null){
+            throw new IllegalArgumentException("Customer id cannot be null");
         }
 
+        Optional<Customer> dbCustomer = customerRepository.findById(idURL);
+        if(!dbCustomer.isPresent()){
+            throw new IllegalArgumentException("Customer not found");
+        }
+
+        Customer updatedCustomer = dbCustomer.get();
+        updatedCustomer.setFirstName(customer.getFirstName());
+        updatedCustomer.setLastName(customer.getLastName());
+        updatedCustomer.setEmail(customer.getEmail());
+        updatedCustomer.setPhone(customer.getPhone());
+        updatedCustomer.setAddress(customer.getAddress());
+        updatedCustomer.setDateOfBirth(customer.getDateOfBirth());
+
+        return customerRepository.save(updatedCustomer);
     }
 }

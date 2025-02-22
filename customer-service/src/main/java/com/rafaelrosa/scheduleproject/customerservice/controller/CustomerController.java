@@ -19,14 +19,28 @@ public class CustomerController {
     //TODO Avaliar o não uso do DTO nas chamadas e respostas da api
     @GetMapping("/{id}")
     public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
+        return ResponseEntity.status(HttpStatus.OK).body(customerService.getCustomerById(id));
+    }
 
-        Customer customer = customerService.getCustomerById(id);
-        return ResponseEntity.status(HttpStatus.OK).body(customer);
+    @GetMapping
+    public ResponseEntity<Iterable<Customer>> getAllCustomers() {
+        return ResponseEntity.status(HttpStatus.OK).body(customerService.getAllCustomers());
     }
 
     @PostMapping("/create")
     public ResponseEntity<Customer> saveCustomer(@RequestBody Customer customer) {
-        customerService.saveCustomer(customer);
-        return ResponseEntity.status(HttpStatus.CREATED).body(customer);
+        //customerService.saveCustomer(customer);
+        return ResponseEntity.status(HttpStatus.CREATED).body(customerService.saveCustomer(customer));
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Customer> updateCustomer(@PathVariable("id") Long idURL, @RequestBody Customer customer) {
+        return ResponseEntity.status(HttpStatus.OK).body(customerService.updateCustomer(idURL, customer));
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<Void> deleteCustomerById(@PathVariable Long id) {
+        customerService.deleteCustomerById(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
