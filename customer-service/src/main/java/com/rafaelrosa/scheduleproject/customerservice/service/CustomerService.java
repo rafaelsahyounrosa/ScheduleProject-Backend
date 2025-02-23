@@ -33,6 +33,8 @@ public class CustomerService {
     }
 
     public Customer updateCustomer(Long idURL, Customer customer){
+
+        //TODO talvez com o json validation required eu consiga tirar esse if
         if(idURL == null){
             throw new IllegalArgumentException("Customer id cannot be null");
         }
