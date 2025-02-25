@@ -38,4 +38,25 @@ public class SchedulingService {
     public Iterable<Scheduling> findAll() {
         return schedulingRepository.findAll();
     }
+
+    public Optional<Scheduling> findById(Long id) {
+
+        Optional<Scheduling> scheduling = schedulingRepository.findById(id);
+
+        if (!scheduling.isPresent()) {
+
+            throw new NotFoundException("Scheduling with id: " + id + " not found");
+        }
+
+        return scheduling;
+    }
+
+    public void deleteById(Long id) {
+
+        if (!schedulingRepository.existsById(id)) {
+            throw new NotFoundException("Scheduling with id: " + id + " not found");
+        }
+
+        schedulingRepository.deleteById(id);
+    }
 }
