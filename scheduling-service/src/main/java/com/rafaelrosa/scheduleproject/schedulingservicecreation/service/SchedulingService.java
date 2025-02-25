@@ -1,10 +1,10 @@
 package com.rafaelrosa.scheduleproject.schedulingservicecreation.service;
 
 import com.rafaelrosa.scheduleproject.commonentities.CustomerDTO;
+import com.rafaelrosa.scheduleproject.commonentities.exceptions.NotFoundException;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.feign.CustomerClient;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.Scheduling;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.repository.SchedulingRepository;
-import jakarta.ws.rs.NotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -27,7 +27,7 @@ public class SchedulingService {
 
         if(customer == null){
 
-            throw new NotFoundException("Customer not found");
+            throw new NotFoundException("Customer with id: " + scheduling.getCustomerId() + " not found");
         }
 
 
