@@ -22,6 +22,7 @@ public class SchedulingService {
 
     public Scheduling scheduleCustomer(Scheduling scheduling){
 
+        //TODO implementar validação de companyID também
         //TODO por enquanto está sem uso, mas pode ser que seja legal ter o user completo caso queira mandar algum email ou mensagem de confirmação do agendamento
         CustomerDTO customer = customerClient.getCustomerById(scheduling.getCustomerId());
 

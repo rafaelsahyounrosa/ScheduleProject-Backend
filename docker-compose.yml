@@ -36,7 +36,7 @@ services:
       MYSQL_USER: ${SCHEDULING_DB_USER}
       MYSQL_PASSWORD: ${SCHEDULING_DB_PASSWORD}
     ports:
-      - "3307:3306"
+      - "33077:3306"
     volumes:
       - scheduling-project-scheduling-db:/var/lib/mysql
     networks:

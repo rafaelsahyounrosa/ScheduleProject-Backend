@@ -25,6 +25,7 @@ public class Scheduling extends SchedulingDTO {
     @Enumerated(EnumType.STRING)
     private SchedulingStatus status;
     private Long customerId;
+    private Long companyId;
 
     @Override
     public Long getId() {
@@ -69,5 +70,15 @@ public class Scheduling extends SchedulingDTO {
     @Override
     public void setCustomerId(Long customerId) {
         this.customerId = customerId;
+    }
+
+    @Override
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    @Override
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 }
