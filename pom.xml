@@ -15,9 +15,9 @@
         <module>common-entities</module>
         <module>customer-service</module>
         <module>scheduling-service</module>
+        <module>user-service</module>
         <!--        <module>branch-configuration-service</module>-->
-<!--        <module>reminder-service</module>-->
-<!--        <module>user-service</module>-->
+        <!--        <module>reminder-service</module>-->
     </modules>
     <dependencies>
         <dependency>

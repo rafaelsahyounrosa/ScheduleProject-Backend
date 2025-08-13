@@ -17,5 +17,6 @@ public class UserDTO {
     private String email;
     //TODO avaliar criação de ENUM para as roles
     private String role;
+    private Object company;
 
 }
