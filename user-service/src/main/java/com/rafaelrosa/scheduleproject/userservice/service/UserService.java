@@ -4,6 +4,7 @@ import com.rafaelrosa.scheduleproject.userservice.model.User;
 import com.rafaelrosa.scheduleproject.userservice.repository.UserRepository;
 import com.rafaelrosa.scheduleproject.userservice.utils.PasswordUtils;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -11,7 +12,7 @@ import javax.security.auth.login.CredentialNotFoundException;
 import java.util.Optional;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 

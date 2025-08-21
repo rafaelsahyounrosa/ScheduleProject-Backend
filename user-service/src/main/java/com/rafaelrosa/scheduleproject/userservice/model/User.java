@@ -29,7 +29,6 @@ public class User extends UserDTO {
     private Roles role;
     @ManyToOne
     @JoinColumn(name = "company_id")
-    @Column(nullable = false)
     private Company company;
 
     @Override
