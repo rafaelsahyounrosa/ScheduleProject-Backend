@@ -12,7 +12,7 @@ import javax.security.auth.login.CredentialNotFoundException;
 import java.util.Optional;
 
 @Service
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserRepository userRepository;
 
@@ -20,31 +20,19 @@ public class UserService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    //TODO Melhorar Logica: Somente admin pode adicionar outros admins
+    //TODO Criar role Merchant Admin. Somente merchant Admin pode criar users dentro da empresa
     public User registerUser(User user) {
 
         user.setPassword(PasswordUtils.encode(user.getPassword()));
         return userRepository.save(user);
     }
 
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> user = userRepository.findByUsername(username);
-        return user.map(u -> org.springframework.security.core.userdetails.User
-                .withUsername(u.getUsername())
-                .password(u.getPassword())
-                .roles(u.getRole())
-                .build()
-        ).orElseThrow(() -> new UsernameNotFoundException("User not found"));
-    }
-
     //TODO Validação de senha basica aqui. Melhorar
     public boolean login(String username, String password) throws CredentialNotFoundException {
-        Optional<User> user = userRepository.findByUsername(username);
-        if (user.isPresent() && PasswordUtils.matches(password, user.get().getPassword())) {
-            return true;
-        }
-        else {
-
-            throw new CredentialNotFoundException("Invalid user or password.");
-        }
+        return userRepository.findByUsername(username)
+                .filter(u -> PasswordUtils.matches(password, u.getPassword()))
+                .map(u -> true)
+                .orElseThrow(() -> new CredentialNotFoundException("Invalid username or password"));
     }
 }
