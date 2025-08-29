@@ -9,6 +9,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -24,9 +26,11 @@ public class JwtUtils {
     @Value("${security.jwt.expiration}")
     private long EXPIRATION_TIME;
 
+    private UserDetails userDetails;
+
     private SecretKey signingKey() {
         // Se a secret estiver Base64 (recomendado):
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET);
+        byte[] keyBytes =  SECRET.getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(keyBytes);
 
         // Se preferir usar string "crua", troque por:
@@ -34,19 +38,41 @@ public class JwtUtils {
     }
 
     public String generateToken(String username) {
-        Date now = new Date();
-        Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
+        Instant now = Instant.now();
+        //Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
         return Jwts.builder().
                 setSubject(username).
-                setIssuedAt(now).
-                setExpiration(expirationDate).
-                signWith(signingKey()).
+                setIssuedAt(Date.from(now)).
+                setExpiration(Date.from(now.plusMillis(EXPIRATION_TIME))).
+                signWith(signingKey(), Jwts.SIG.HS256).
                 compact();
     }
 
-    public boolean validateToken(String token, UserDetails expectedUsername) {
+    public boolean validateToken(String token, UserDetails userDetails) {
         String username = extractUsername(token);
-        return username != null && username.equals(expectedUsername) && !isTokenExpired(token);
+
+        //TODO remover logs
+        System.out.println("[JWT] validateToken() log. username != null =" + username != null);
+        System.out.println("[JWT] validateToken() log. username = " + username);
+        System.out.println("[JWT] validateToken() log. username.equals(expectedUsername) = " + username.equals(userDetails));
+        System.out.println("[JWT] validateToken() log. expectedUsername = " + userDetails);
+        System.out.println("[JWT] validateToken() log. isTokenExpired(token) = " + isTokenExpired(token));
+
+        try{
+            Claims claims = parseAllClaims(token);
+            String sub = claims.getSubject();
+            Date exp = claims.getExpiration();
+            boolean subjectOk = (sub != null && sub.equals(userDetails.getUsername()));
+            boolean notExpired = (exp != null || exp.after(new Date()));
+
+            System.out.println("[JWT] sub=" + sub + " exp=" + exp + " subjectOk=" + subjectOk + " notExpired=" + notExpired);
+            return subjectOk && notExpired;
+
+        }
+        catch (Exception e){
+            System.out.println("[JWT] validateToken exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
+            return false;
+        }
     }
 
     public boolean isTokenExpired(String token) {
@@ -54,15 +80,20 @@ public class JwtUtils {
     }
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        System.out.println("[JWT] extractUsername() log. subject = " + parseAllClaims(token).getSubject());
+        return parseAllClaims(token).getSubject();
+    }
+
+    private Claims parseAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        Claims claims = Jwts.parserBuilder()
-                .setSigningKey(signingKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        Claims claims = parseAllClaims(token);
         return claimsResolver.apply(claims);
     }
 

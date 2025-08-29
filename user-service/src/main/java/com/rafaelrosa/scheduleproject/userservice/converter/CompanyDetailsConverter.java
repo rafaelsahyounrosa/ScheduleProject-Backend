@@ -1,30 +1,33 @@
 package com.rafaelrosa.scheduleproject.userservice.converter;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rafaelrosa.scheduleproject.userservice.model.CompanyDetails;
 import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
+
+@Converter(autoApply = false)
 public class CompanyDetailsConverter implements AttributeConverter<CompanyDetails, String> {
-
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @Override
-    public String convertToDatabaseColumn(CompanyDetails details) {
+    public String convertToDatabaseColumn(CompanyDetails attribute) {
         try {
-            return details == null ? null : objectMapper.writeValueAsString(details);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Erro ao converter CompanyDetails para JSON", e);
+            if (attribute == null) return "{}";
+            return MAPPER.writeValueAsString(attribute);
+        } catch (Exception e) {
+            return "{}"; // fallback seguro
         }
     }
 
     @Override
     public CompanyDetails convertToEntityAttribute(String dbData) {
         try {
-            return dbData == null ? null : objectMapper.readValue(dbData, CompanyDetails.class);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Erro ao converter JSON para CompanyDetails", e);
+            if (dbData == null || dbData.isBlank()) return new CompanyDetails();
+            return MAPPER.readValue(dbData, CompanyDetails.class);
+        } catch (Exception e) {
+            return new CompanyDetails(); // fallback seguro
         }
     }
 }

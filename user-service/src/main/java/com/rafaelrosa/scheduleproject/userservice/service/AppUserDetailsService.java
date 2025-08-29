@@ -25,6 +25,7 @@ public class AppUserDetailsService implements UserDetailsService {
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
 
         // Supondo que user.getRole() retorne "ADMIN" ou "USER"
+        System.out.println("Log do userRepository.findByUsername(username) no AppUserDetailsService: " + user);
         var authority = new SimpleGrantedAuthority("ROLE_" + user.getRole());
 
         return new org.springframework.security.core.userdetails.User(

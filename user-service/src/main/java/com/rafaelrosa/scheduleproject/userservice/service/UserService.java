@@ -35,4 +35,9 @@ public class UserService {
                 .map(u -> true)
                 .orElseThrow(() -> new CredentialNotFoundException("Invalid username or password"));
     }
+
+    //TODO implementar visibilidade limitada para não ADMINS
+    public Iterable<User> findAll() {
+        return userRepository.findAll();
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
+
+    //TODO criar endpoints para company
 
     private final UserService userService;
     private final JwtUtils jwtUtils;
@@ -36,6 +39,7 @@ public class AuthController {
         this.userDetailsService = userDetailsService;
     }
 
+    //TODO Melhorar retorno e incluir Company no DTO que volta como resposta
     @PostMapping("/register")
     public ResponseEntity<RegisterResponse> register(@RequestBody User user) {
 
@@ -57,20 +61,28 @@ public class AuthController {
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest loginRequest) {
 
         var authToken = new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password());
-        authenticationManager.authenticate(authToken);
 
-        String jwt = jwtUtils.generateToken(loginRequest.username());
-        UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.username());
-        String role = userDetails
-                .getAuthorities()
-                .stream()
-                .findFirst()
-                .map(GrantedAuthority::getAuthority)
-                .orElse("ROLE_USER");
+        String jwt = null;
+        String role = null;
+        try {
+            authenticationManager.authenticate(authToken);
+
+            jwt = jwtUtils.generateToken(loginRequest.username());
+            UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.username());
+            System.out.println("Log do userDetailsService.loadUserByUsername(loginRequest.username()) em AuthController. Usuario: " + userDetails);
+            role = userDetails
+                    .getAuthorities()
+                    .stream()
+                    .findFirst()
+                    .map(GrantedAuthority::getAuthority)
+                    .orElse("ROLE_USER");
+        } catch (AuthenticationException e) {
+
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         return ResponseEntity.ok(new LoginResponse(jwt, loginRequest.username(), role.replace("ROLE_", "")));
     }
-
 
 
 }
