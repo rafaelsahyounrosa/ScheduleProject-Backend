@@ -16,6 +16,7 @@
         <module>customer-service</module>
         <module>scheduling-service</module>
         <module>user-service</module>
+        <module>common-security-spring-boot-starter</module>
         <!--        <module>branch-configuration-service</module>-->
         <!--        <module>reminder-service</module>-->
     </modules>

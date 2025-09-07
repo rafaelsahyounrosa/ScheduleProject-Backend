@@ -22,6 +22,8 @@ public class UsersControllers {
         this.userService = userService;
     }
 
+
+    //TODO retornar um UserDTO sem a senha
     @GetMapping
     public ResponseEntity<Iterable<User>> getUsers() {
         return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
