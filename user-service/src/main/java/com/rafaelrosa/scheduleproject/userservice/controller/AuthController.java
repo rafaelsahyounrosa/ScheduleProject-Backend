@@ -67,7 +67,8 @@ public class AuthController {
         try {
             authenticationManager.authenticate(authToken);
 
-            jwt = jwtUtils.generateToken(loginRequest.username());
+            //TODO checar novo modelo passando as roles ao inves de so o username
+            jwt = jwtUtils.generateToken(loginRequest.username(), authToken.getAuthorities());
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginRequest.username());
             System.out.println("Log do userDetailsService.loadUserByUsername(loginRequest.username()) em AuthController. Usuario: " + userDetails);
             role = userDetails

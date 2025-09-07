@@ -5,13 +5,16 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.function.Function;
 
 @Component
@@ -37,11 +40,17 @@ public class JwtUtils {
         // return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, Collection<? extends GrantedAuthority> authorities) {
         Instant now = Instant.now();
+
+        List<String> roles = authorities.stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
         //Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
         return Jwts.builder().
                 setSubject(username).
+                claim("roles", roles).
                 setIssuedAt(Date.from(now)).
                 setExpiration(Date.from(now.plusMillis(EXPIRATION_TIME))).
                 signWith(signingKey(), Jwts.SIG.HS256).
