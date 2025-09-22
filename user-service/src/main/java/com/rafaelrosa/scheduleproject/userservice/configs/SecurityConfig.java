@@ -42,8 +42,8 @@ public class SecurityConfig {
                         sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(daoAuthenticationProvider())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // Permite requisições OPTIONS para CORS
-                        .requestMatchers("/auth/**").permitAll() // Permite acesso a todos os endpoints de autenticação)
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll() // Permite requisições OPTIONS para CORS
+                        //.requestMatchers("/auth/**").permitAll() // Permite acesso a todos os endpoints de autenticação)
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll() // Permite acesso aos endpoints de saúde e informações do Actuator
                         .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN") // Apenas usuários com roles USER ou ADMIN podem acessar
                         .requestMatchers("/companies/**").authenticated()

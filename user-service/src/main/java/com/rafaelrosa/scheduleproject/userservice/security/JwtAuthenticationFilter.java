@@ -1,5 +1,6 @@
 package com.rafaelrosa.scheduleproject.userservice.security;
 
+import com.rafaelrosa.scheduleproject.userservice.dto.AuthenticatedUser;
 import com.rafaelrosa.scheduleproject.userservice.service.AppUserDetailsService;
 import com.rafaelrosa.scheduleproject.userservice.utils.JwtUtils;
 import jakarta.servlet.FilterChain;
@@ -17,6 +18,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -30,6 +32,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
 
+    //TODO avaliar refatoração
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
@@ -37,6 +40,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String path = request.getServletPath();
         String authHeader = request.getHeader("Authorization");
+
+        System.out.println("[JWT] path={" + path +"}, hasAuthHeader={"+ authHeader != null +"}");
+
         if(authHeader == null || !authHeader.startsWith("Bearer ")){
             // sem header -> segue anônimo
             System.out.println("[JWT] skip: sem Authorization. path=" + path);
@@ -45,15 +51,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String username = null;
+        String username;
 
         try{
             username = jwtUtils.extractUsername(token);
+            var roles = jwtUtils.extractClaim(token, claims -> {
+                List<String> rolesToken = claims.get("roles", List.class);
+                return (rolesToken != null && !rolesToken.isEmpty()) ? rolesToken.get(0) : null;
+            });
             // LOG CHAVE 1
             System.out.println("[JWT] path=" + path + " username=" + username);
 
             if(username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
+                // carrega authorities com UserDetailsService (1 role)
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                 boolean isValid = jwtUtils.validateToken(token, userDetails);
                 System.out.println("[JWT] validateToken=" + isValid
@@ -61,11 +71,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         + " userDetails.username=" + userDetails.getUsername());
 
                 if(isValid){
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                            userDetails, null, userDetails.getAuthorities());
+//                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+//                            userDetails, null, userDetails.getAuthorities());
+//                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+//                    SecurityContextHolder.getContext().setAuthentication(auth);
+//                    // LOG CHAVE 3
+//                    System.out.println("[JWT] authentication SET. authorities=" + userDetails.getAuthorities());
+
+                    Long companyId = jwtUtils.extractClaim(token, claims -> {
+                        Number n = claims.get("companyId", Number.class);
+                        System.out.println("[JWT] extracted companyId=" + n);
+                        return (n == null) ? null : n.longValue();
+                    });
+
+                    System.out.println("[JWT] token ok: username={"+ username +"}, companyId={"+ companyId +"}");
+
+                    var principal = new AuthenticatedUser(username, companyId);
+
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            principal,
+                            null,
+                            userDetails.getAuthorities()
+                    );
                     auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(auth);
-                    // LOG CHAVE 3
                     System.out.println("[JWT] authentication SET. authorities=" + userDetails.getAuthorities());
                 }
                 else {
@@ -88,7 +117,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getServletPath();
         // pule autenticação para rotas públicas
-        return path.startsWith("/auth/") || path.startsWith("/actuator/");
+        logger.debug("[JWT - shouldNotFilter] path={" + path + "}");
+        return path.equals("/auth/login") || path.startsWith("/actuator/");
     }
 
 }

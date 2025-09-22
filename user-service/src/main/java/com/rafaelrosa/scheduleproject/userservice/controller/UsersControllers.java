@@ -24,6 +24,7 @@ public class UsersControllers {
 
 
     //TODO retornar um UserDTO sem a senha
+    //TODO restringir endpoints diretos como esse para admins
     @GetMapping
     public ResponseEntity<Iterable<User>> getUsers() {
         return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());

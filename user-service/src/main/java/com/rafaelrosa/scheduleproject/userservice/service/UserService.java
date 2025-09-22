@@ -6,6 +6,7 @@ import com.rafaelrosa.scheduleproject.userservice.utils.PasswordUtils;
 import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.CredentialNotFoundException;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -35,5 +36,9 @@ public class UserService {
     //TODO implementar visibilidade limitada para não ADMINS
     public Iterable<User> findAll() {
         return userRepository.findAll();
+    }
+
+    public Optional<User> findByUsername(String username) {
+        return Optional.ofNullable(userRepository.findByUsername(username).orElseThrow(() -> new IllegalArgumentException("User not found")));
     }
 }
