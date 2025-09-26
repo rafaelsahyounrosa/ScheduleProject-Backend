@@ -45,7 +45,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll() // Permite requisições OPTIONS para CORS
                         //.requestMatchers("/auth/**").permitAll() // Permite acesso a todos os endpoints de autenticação)
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll() // Permite acesso aos endpoints de saúde e informações do Actuator
-                        .requestMatchers("/users/**").hasAnyRole("USER", "ADMIN") // Apenas usuários com roles USER ou ADMIN podem acessar
+                        //.requestMatchers("/users/**").hasAnyRole("ADMIN") // Rever se faz sentido pois outros serviços podem precisar consultar usuários
                         .requestMatchers("/companies/**").authenticated()
                         .anyRequest().authenticated()
                 )

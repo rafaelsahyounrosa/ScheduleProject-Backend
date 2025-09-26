@@ -1,5 +1,6 @@
 package com.rafaelrosa.scheduleproject.userservice.service;
 
+import com.rafaelrosa.scheduleproject.userservice.dto.UserView;
 import com.rafaelrosa.scheduleproject.userservice.model.User;
 import com.rafaelrosa.scheduleproject.userservice.repository.UserRepository;
 import com.rafaelrosa.scheduleproject.userservice.utils.PasswordUtils;
@@ -34,8 +35,13 @@ public class UserService {
     }
 
     //TODO implementar visibilidade limitada para não ADMINS
-    public Iterable<User> findAll() {
-        return userRepository.findAll();
+    public Iterable<UserView> findAll() {
+
+        var users = userRepository.findAll().stream()
+                .map(u -> UserView.from(u))
+                .toList();
+
+        return users;
     }
 
     public Optional<User> findByUsername(String username) {
