@@ -1,7 +1,12 @@
 package com.rafaelrosa.scheduleproject.schedulingservicecreation.controller;
 
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.Scheduling;
+import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto.CreateScheduleRequest;
+import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto.ScheduleView;
+import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto.UpdateScheduleRequest;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.service.SchedulingService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,18 +24,17 @@ public class SchedulingController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Scheduling> createScheduling(@RequestBody Scheduling scheduling) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(schedulingService.scheduleCustomer(scheduling));
+    public ResponseEntity<ScheduleView> createScheduling(@RequestBody CreateScheduleRequest schedule) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(schedulingService.scheduleCustomer(schedule));
     }
 
     @GetMapping
-    public ResponseEntity<Iterable<Scheduling>> findAll() {
-        return ResponseEntity.status(HttpStatus.OK).body(schedulingService.findAll());
+    public ResponseEntity<Page<ScheduleView>> findAll(Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(schedulingService.findAll(pageable));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Scheduling>> findById(@PathVariable Long id) {
-
+    public ResponseEntity<ScheduleView> findById(@PathVariable Long id) {
         return ResponseEntity.status(HttpStatus.OK).body(schedulingService.findById(id));
     }
 
@@ -38,6 +42,11 @@ public class SchedulingController {
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
 
         schedulingService.deleteById(id);
-        return ResponseEntity.status(HttpStatus.OK).build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<ScheduleView> updateSchedule(@PathVariable("id") Long idURL, @RequestBody UpdateScheduleRequest request) {
+        return ResponseEntity.status(HttpStatus.OK).body(schedulingService.updateSchedule(idURL, request));
     }
 }
