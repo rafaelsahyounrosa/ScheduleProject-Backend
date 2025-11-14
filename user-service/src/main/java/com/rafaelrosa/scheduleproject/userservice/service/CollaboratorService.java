@@ -75,12 +75,12 @@ public class CollaboratorService {
         User u = users.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found."));
 
-        //TODO Remover log
+        //TODO VERIFICAR.
         System.out.println("[ROLE COMPARISON CHECK] Role: " + u.getRole() + " ROLE ENUM: " + Roles.COLLABORATOR.name());
             try {
 
-                if(u.getRole().equals(Roles.COLLABORATOR.name())) {
-                throw new AccessDeniedException("You are not allowed to update Collaborator.");
+                if(!u.getRole().equals(Roles.COLLABORATOR.name())) {
+                throw new AccessDeniedException("You are not allowed to update a Non Collaborator.");
                 }
 
                 if(!authz.isAdmin()) {

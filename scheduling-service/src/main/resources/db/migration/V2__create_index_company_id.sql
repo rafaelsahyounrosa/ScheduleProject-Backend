@@ -1,0 +1,1 @@
+CREATE INDEX idx_schedulings_company_id ON schedulings(company_id);

@@ -4,6 +4,8 @@ import com.rafaelrosa.scheduleproject.userservice.dto.UserView;
 import com.rafaelrosa.scheduleproject.userservice.model.User;
 import com.rafaelrosa.scheduleproject.userservice.repository.UserRepository;
 import com.rafaelrosa.scheduleproject.userservice.utils.PasswordUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.security.auth.login.CredentialNotFoundException;
@@ -35,11 +37,9 @@ public class UserService {
     }
 
     //TODO implementar visibilidade limitada para não ADMINS
-    public Iterable<UserView> findAll() {
+    public Page<UserView> findAll(Pageable pageable) {
 
-        var users = userRepository.findAll().stream()
-                .map(u -> UserView.from(u))
-                .toList();
+        var users = userRepository.findAll(pageable).map(u -> UserView.from(u));
 
         return users;
     }

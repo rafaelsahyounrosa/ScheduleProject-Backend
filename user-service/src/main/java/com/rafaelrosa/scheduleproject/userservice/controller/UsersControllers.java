@@ -4,6 +4,8 @@ package com.rafaelrosa.scheduleproject.userservice.controller;
 import com.rafaelrosa.scheduleproject.userservice.dto.UserView;
 import com.rafaelrosa.scheduleproject.userservice.model.User;
 import com.rafaelrosa.scheduleproject.userservice.service.UserService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,8 +30,8 @@ public class UsersControllers {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<Iterable<UserView>> getUsers() {
-        return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
+    public ResponseEntity<Page<UserView>> getUsers(Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(userService.findAll(pageable));
     }
 
     @PreAuthorize("hasRole('ADMIN')")

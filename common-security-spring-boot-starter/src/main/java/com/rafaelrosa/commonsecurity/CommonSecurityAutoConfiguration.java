@@ -5,19 +5,21 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @AutoConfiguration
 @EnableMethodSecurity
 @EnableConfigurationProperties({JwtProperties.class, SecurityDefautls.class})
 @ConditionalOnClass({SecurityFilterChain.class, HttpSecurity.class})
 public class CommonSecurityAutoConfiguration {
+
+    @Bean
+    public Authz authz(){ return new  Authz(); }
 
     @Bean
     @ConditionalOnMissingBean
@@ -51,5 +53,18 @@ public class CommonSecurityAutoConfiguration {
                 .addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    @Bean
+    public feign.RequestInterceptor authRelayInterceptor(){
+        return template -> {
+            var attrs = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if(attrs instanceof ServletRequestAttributes sra){
+                String auth = sra.getRequest().getHeader("Authorization");
+                if(auth != null && !auth.isBlank()){
+                    template.header("Authorization", auth);
+                }
+            }
+        };
     }
 }

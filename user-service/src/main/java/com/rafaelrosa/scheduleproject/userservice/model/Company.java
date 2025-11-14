@@ -1,20 +1,16 @@
 package com.rafaelrosa.scheduleproject.userservice.model;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rafaelrosa.scheduleproject.commonentities.CompanyDTO;
 import com.rafaelrosa.scheduleproject.userservice.converter.CompanyDetailsConverter;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-import java.io.IOException;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "companies")
-public class Company {
+public class Company extends CompanyDTO {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

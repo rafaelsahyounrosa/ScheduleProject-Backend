@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Date;
 
 @Entity
@@ -28,7 +29,9 @@ public class Customer extends CustomerDTO implements Serializable {
     @Column(length = 255)
     private String address;
     @Column(name = "date_of_birth")
-    private Date dateOfBirth;
+    private LocalDate dateOfBirth;
+    @Column(nullable = false, name = "company_id")
+    private Long companyId;
 
     @Override
     public Long getId() {
@@ -86,12 +89,21 @@ public class Customer extends CustomerDTO implements Serializable {
     }
 
     @Override
-    public Date getDateOfBirth() {
+    public LocalDate getDateOfBirth() {
         return dateOfBirth;
     }
 
     @Override
-    public void setDateOfBirth(Date dateOfBirth) {
+    public void setDateOfBirth(LocalDate dateOfBirth) {
         this.dateOfBirth = dateOfBirth;
+    }
+
+    @Override
+    public Long getCompanyId() {
+        return companyId;
+    }
+    @Override
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 }
