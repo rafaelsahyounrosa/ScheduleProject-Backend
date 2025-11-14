@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -20,7 +21,7 @@ public class Scheduling extends SchedulingDTO {
     private Long id;
 
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private LocalDate startTime;
     private String description;
     @Enumerated(EnumType.STRING)
     private SchedulingStatus status;
@@ -33,12 +34,12 @@ public class Scheduling extends SchedulingDTO {
     }
 
     @Override
-    public LocalDateTime getStartTime() {
+    public LocalDate getStartTime() {
         return startTime;
     }
 
     @Override
-    public void setStartTime(LocalDateTime startTime) {
+    public void setStartTime(LocalDate startTime) {
         this.startTime = startTime;
     }
 

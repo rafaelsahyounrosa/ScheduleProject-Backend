@@ -89,6 +89,11 @@
 			<artifactId>common-entities</artifactId>
 			<version>1.0.0</version>
 		</dependency>
+        <dependency>
+            <groupId>com.rafaelrosa.scheduleproject</groupId>
+            <artifactId>common-security-spring-boot-starter</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -13,7 +14,7 @@ import java.time.LocalDateTime;
 public class SchedulingDTO {
 
     private Long id;
-    private LocalDateTime startTime;
+    private LocalDate startTime;
     private String description;
     private SchedulingStatus status; //ENUM de Possíveis Status (CANCELED, CONFIRMED, SENT, etc)
     private Long customerId;
