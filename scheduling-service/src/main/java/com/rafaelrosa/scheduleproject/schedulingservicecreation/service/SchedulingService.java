@@ -1,10 +1,11 @@
 package com.rafaelrosa.scheduleproject.schedulingservicecreation.service;
 
 import com.rafaelrosa.commonsecurity.Authz;
-import com.rafaelrosa.scheduleproject.commonentities.CustomerDTO;
 import com.rafaelrosa.scheduleproject.commonentities.enums.SchedulingStatus;
 import com.rafaelrosa.scheduleproject.commonentities.exceptions.NotFoundException;
+import com.rafaelrosa.scheduleproject.schedulingservicecreation.feign.CompanyClient;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.feign.CustomerClient;
+import com.rafaelrosa.scheduleproject.schedulingservicecreation.helper.SchedulePresenter;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.Scheduling;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto.CreateScheduleRequest;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto.ScheduleView;
@@ -17,19 +18,34 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class SchedulingService {
 
     private final SchedulingRepository schedulingRepository;
-    private final CustomerClient customerClient;
+    private final CustomerClient customers;
+    private final CompanyClient companies;
     private final Authz authz;
+    private final SchedulePresenter presenter;
 
-    public SchedulingService(SchedulingRepository schedulingRepository, CustomerClient customerClient, Authz authz) {
+    //TODO evoluir para batch ao invés de cache local por performance.
+    /*
+    * Depois (médio prazo): crie endpoints batch:
+        POST /api/customers/summaries:batch com body [ids]
+        POST /api/companies/summaries:batch com body [ids]
+        e resolva nomes em 2 chamadas por página (sem N+1), usando collect(distinct ids).*/
+    // pode trocar por Caffeine/Cacheable depois
+    private final Map<Long, String> customerNameCache = new ConcurrentHashMap<>();
+    private final Map<Long, String> companyNameCache  = new ConcurrentHashMap<>();
+
+    public SchedulingService(SchedulingRepository schedulingRepository, CustomerClient customerClient, CompanyClient companies, Authz authz, SchedulePresenter presenter) {
         this.schedulingRepository = schedulingRepository;
-        this.customerClient = customerClient;
+        this.customers = customerClient;
+        this.companies = companies;
         this.authz = authz;
+        this.presenter = presenter;
     }
 
     @Transactional
@@ -38,10 +54,10 @@ public class SchedulingService {
         final boolean admin = authz.isAdmin();
 
         //TODO por enquanto está sem uso, mas pode ser que seja legal ter o user completo caso queira mandar algum email ou mensagem de confirmação do agendamento
-        var customer = customerClient.getCustomerById(req.customerId());
+        var customer = customers.getCustomerById(req.customerId());
         Long customerCompanyId = customer.getCompanyId();
 
-        Long targetCompanyId = admin ? req.companyId() : authz.currentCompanyId();
+        Long targetCompanyId = admin ? customerCompanyId : authz.currentCompanyId();
 
         if(targetCompanyId == null){
             throw new AccessDeniedException("Your token has no company scope");
@@ -63,13 +79,11 @@ public class SchedulingService {
     @Transactional(readOnly = true)
     public Page<ScheduleView> findAll(Pageable pageable) {
 
-        if(authz.isAdmin()){
-            return schedulingRepository.findAll(pageable).map(ScheduleView::from);
-        }
+        Page<Scheduling> page = authz.isAdmin()
+                ? schedulingRepository.findAll(pageable)
+                : schedulingRepository.findAllByCompanyId(requireCompany(), pageable);
 
-        Long cid = authz.currentCompanyId();
-        if(cid == null) throw new AccessDeniedException("Your token has no company scope");
-        return schedulingRepository.findAllByCompanyId(cid, pageable).map(ScheduleView::from);
+        return page.map(presenter::toView);
     }
 
     @Transactional(readOnly = true)
@@ -117,5 +131,26 @@ public class SchedulingService {
         if(req.startTime() != null) s.setStartTime(req.startTime());
         if(req.status() != null) s.setStatus(SchedulingStatus.valueOf(req.status()));
         return ScheduleView.from(schedulingRepository.save(s));
+    }
+
+    private Long requireCompany() {
+        Long cid = authz.currentCompanyId();
+        if (cid == null) throw new AccessDeniedException("Your token has no company scope");
+        return cid;
+    }
+
+    private String safeCustomerName(Long id) {
+        try {
+            return customers.getCustomerSummary(id).name();
+        } catch (Exception e) {
+            return "Customer #" + id; // fallback
+        }
+    }
+    private String safeCompanyName(Long id) {
+        try {
+            return companies.getCompanySummary(id).name();
+        } catch (Exception e) {
+            return "Company #" + id; // fallback
+        }
     }
 }

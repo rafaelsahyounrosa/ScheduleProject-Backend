@@ -2,6 +2,7 @@ package com.rafaelrosa.scheduleproject.customerservice.controller;
 
 import com.rafaelrosa.scheduleproject.customerservice.model.Customer;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.CreateCustomerRequest;
+import com.rafaelrosa.scheduleproject.customerservice.model.dto.CustomerSummary;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.CustomerView;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.UpdateCustomerRequest;
 import com.rafaelrosa.scheduleproject.customerservice.service.CustomerService;
@@ -46,5 +47,10 @@ public class CustomerController {
     public ResponseEntity<Void> deleteCustomerById(@PathVariable Long id) {
         customerService.deleteCustomerById(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping("/{id}/summary")
+    public ResponseEntity<CustomerSummary> summary(@PathVariable Long id) {
+        return ResponseEntity.of(customerService.findSummaryScoped(id));
     }
 }

@@ -23,6 +23,7 @@ public class SchedulingController {
         this.schedulingService = schedulingService;
     }
 
+
     @PostMapping("/create")
     public ResponseEntity<ScheduleView> createScheduling(@RequestBody CreateScheduleRequest schedule) {
         return ResponseEntity.status(HttpStatus.CREATED).body(schedulingService.scheduleCustomer(schedule));

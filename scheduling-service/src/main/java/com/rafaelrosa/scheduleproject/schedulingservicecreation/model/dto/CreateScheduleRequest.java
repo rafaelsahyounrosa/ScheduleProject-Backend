@@ -9,7 +9,7 @@ public record CreateScheduleRequest(
         @NotBlank @Past LocalDate startTime,
         @NotBlank String description,
         @NotBlank String status,
-        @NotBlank Long customerId,
-        @NotBlank Long companyId
+        @NotBlank Long customerId
+        //@NotBlank Long companyId
         ) {}
 

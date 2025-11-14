@@ -3,15 +3,19 @@ package com.rafaelrosa.scheduleproject.customerservice.service;
 import com.rafaelrosa.commonsecurity.Authz;
 import com.rafaelrosa.scheduleproject.customerservice.model.Customer;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.CreateCustomerRequest;
+import com.rafaelrosa.scheduleproject.customerservice.model.dto.CustomerSummary;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.CustomerView;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.UpdateCustomerRequest;
 import com.rafaelrosa.scheduleproject.customerservice.repository.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 public class CustomerService {
@@ -112,5 +116,15 @@ public class CustomerService {
         if(req.birthDate() != null) c.setDateOfBirth(req.birthDate());
 
         return CustomerView.from(customerRepository.save(c));
+    }
+
+    public Optional<CustomerSummary> findSummaryScoped(Long id) {
+        if (authz.isAdmin()) {
+            return customerRepository.findById(id).map(CustomerSummary::from);
+        }
+        Long cid = authz.currentCompanyId();
+        if (cid == null) throw new AccessDeniedException("Your token has no company scope");
+        if (!cid.equals(id)) throw new AccessDeniedException("Forbidden company");
+        return customerRepository.findByIdAndCompanyId(id, cid).map(CustomerSummary::from);
     }
 }

@@ -1,6 +1,7 @@
 package com.rafaelrosa.scheduleproject.userservice.model;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
@@ -19,7 +20,7 @@ public class CompanyDetails {
     @JsonIgnore
     private Map<String, Object> extras = new HashMap<>();
 
-    @JsonAnyGetter
+    @JsonAnySetter
     public void putExtra(String key, Object value) {
         extras.put(key, value);
     }
@@ -37,11 +38,11 @@ public class CompanyDetails {
         this.standardMessage = standardMessage;
     }
 
-    public int getReturnTimeInDays() {
+    public int getReturnMessageTimeInDays() {
         return returnMessageTimeInDays;
     }
 
-    public void setReturnTimeInDays(int returnTimeInDays) {
+    public void setReturnMessageTimeInDays(int returnTimeInDays) {
         this.returnMessageTimeInDays = returnTimeInDays;
     }
 }
