@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -14,12 +15,17 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class JwtUtils {
 
     private final SecretKey key;
     private final long clockSkewSeconds;
+    @Value("${security.jwt.secret}")
+    private String SECRET;
+    @Value("${security.jwt.expiration}")
+    private long EXPIRATION_TIME;
 
     public JwtUtils(JwtProperties props) {
         this.key = Keys.hmacShaKeyFor(props.secret().getBytes(StandardCharsets.UTF_8));
@@ -85,5 +91,27 @@ public class JwtUtils {
             return List.of();
         }
         return List.of();
+    }
+
+    private SecretKey signingKey() {
+        // Se a secret estiver Base64 (recomendado):
+        byte[] keyBytes =  SECRET.getBytes(StandardCharsets.UTF_8);
+        return Keys.hmacShaKeyFor(keyBytes);
+
+        // Se preferir usar string "crua", troque por:
+        // return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private Claims parseAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(signingKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
+
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+        Claims claims = parseAllClaims(token);
+        return claimsResolver.apply(claims);
     }
 }

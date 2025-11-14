@@ -15,6 +15,7 @@ import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 @Component
@@ -40,21 +41,24 @@ public class JwtUtils {
         // return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
-    public String generateToken(String username, Collection<? extends GrantedAuthority> authorities) {
+    public String generateToken(String username, Collection<? extends GrantedAuthority> authorities, Long companyId) {
         Instant now = Instant.now();
 
         List<String> roles = authorities.stream()
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        //Date expirationDate = new Date(now.getTime() + EXPIRATION_TIME);
-        return Jwts.builder().
-                setSubject(username).
-                claim("roles", roles).
-                setIssuedAt(Date.from(now)).
-                setExpiration(Date.from(now.plusMillis(EXPIRATION_TIME))).
-                signWith(signingKey(), Jwts.SIG.HS256).
-                compact();
+        var builder = Jwts.builder()
+                .setSubject(username)
+                .claim("roles", roles)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plusMillis(EXPIRATION_TIME)))
+                .signWith(signingKey(), Jwts.SIG.HS256);
+
+        if(companyId != null){
+            builder.claim("companyId", companyId);
+        }
+        return builder.compact();
     }
 
     public boolean validateToken(String token, UserDetails userDetails) {

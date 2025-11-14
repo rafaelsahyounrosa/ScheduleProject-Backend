@@ -94,5 +94,7 @@ public class User extends UserDTO {
         this.company = company;
     }
 
+    public Roles getRoleEnum() {return this.role;}
+
 
 }

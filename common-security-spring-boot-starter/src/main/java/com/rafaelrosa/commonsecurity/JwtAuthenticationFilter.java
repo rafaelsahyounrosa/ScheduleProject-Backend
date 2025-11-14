@@ -63,8 +63,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             //Tenta extrair roles da claim
             Collection<? extends GrantedAuthority> authorities = jwtUtils.extractAuthorities(token);
 
-            //Monta o principal sem precisar do UDS
-            var principal = new User(username, "", authorities);
+            //Extrai companyId
+            Long companyId = jwtUtils.extractClaim(token, claims -> {
+               Number n = claims.get("companyId", Number.class);
+               return (n == null) ? null : n.longValue();
+            });
+
+            System.out.println("[JWT] companyId=" + companyId);
+
+            //Monta o principal
+            var principal = new AuthenticatedUser(username, companyId);
             UsernamePasswordAuthenticationToken auth =
                     new UsernamePasswordAuthenticationToken(principal, null, authorities);
             auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
@@ -74,7 +82,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         }catch (Exception e){
             //TODO remover log
-            // log para debugar; não derrube a request aqui
+            // log para debugar; não derrubar a request aqui
             System.out.println("[JWT] exception: " + e.getClass().getSimpleName() + " - " + e.getMessage());
             //filterChain.doFilter(request, response);
         }
