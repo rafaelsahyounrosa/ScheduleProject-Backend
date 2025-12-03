@@ -1,15 +1,16 @@
 package com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto;
 
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Past;
+import jakarta.validation.constraints.NotNull;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record CreateScheduleRequest(
-        @NotBlank @Past LocalDate startTime,
+        @NotNull @FutureOrPresent LocalDateTime startTime,
         @NotBlank String description,
         @NotBlank String status,
-        @NotBlank Long customerId
+        @NotNull Long customerId
         //@NotBlank Long companyId
         ) {}
 
