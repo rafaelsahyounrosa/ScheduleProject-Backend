@@ -30,8 +30,9 @@ public class SchedulingController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ScheduleView>> findAll(Pageable pageable) {
-        return ResponseEntity.status(HttpStatus.OK).body(schedulingService.findAll(pageable));
+    public ResponseEntity<Page<ScheduleView>> findAll(@RequestParam(required = false) String search,
+            Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(schedulingService.findAll(search, pageable));
     }
 
     @GetMapping("/{id}")

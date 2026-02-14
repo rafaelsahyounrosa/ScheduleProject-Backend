@@ -21,7 +21,7 @@ public class Scheduling extends SchedulingDTO {
     private Long id;
 
     @Column(name = "start_time", nullable = false)
-    private LocalDate startTime;
+    private LocalDateTime startTime;
     private String description;
     @Enumerated(EnumType.STRING)
     private SchedulingStatus status;
@@ -34,12 +34,12 @@ public class Scheduling extends SchedulingDTO {
     }
 
     @Override
-    public LocalDate getStartTime() {
+    public LocalDateTime getStartTime() {
         return startTime;
     }
 
     @Override
-    public void setStartTime(LocalDate startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 

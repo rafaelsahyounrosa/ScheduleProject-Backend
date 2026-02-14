@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class SchedulingDTO {
 
     private Long id;
-    private LocalDate startTime;
+    private LocalDateTime startTime;
     private String description;
     private SchedulingStatus status; //ENUM de Possíveis Status (CANCELED, CONFIRMED, SENT, etc)
     private Long customerId;

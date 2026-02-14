@@ -41,10 +41,13 @@ public class AdminCompanyAdminController {
         return  ResponseEntity.noContent().build();
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('COMPANY_ADMIN')")
     @GetMapping
-    public Page<UserView> getCompanyAdmins(Pageable pageable) {
-        return companyAdminService.findAllByRole(pageable);
+    public ResponseEntity<Page<UserView>> getCompanyAdmins(@RequestParam(required = false) String search,
+            Pageable pageable) {
+         return ResponseEntity.ok(companyAdminService.findAllByRole(search, pageable));
     }
+
+    //TODO criar um endpoint de promote e demote de usuários. Verificar se pode ser aberto para company Admins também
 
 }

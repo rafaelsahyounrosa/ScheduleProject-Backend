@@ -42,7 +42,8 @@ public class CollaboratorController {
 
     @PreAuthorize("hasRole('ADMIN') or hasRole('COMPANY_ADMIN')")
     @GetMapping
-    public Page<UserView> list(Pageable pageable){
-        return collaboratorService.list(pageable);
+    public ResponseEntity<Page<UserView>> list(@RequestParam(required = false) String search,
+            Pageable pageable){
+        return ResponseEntity.ok(collaboratorService.list(search, pageable));
     }
 }

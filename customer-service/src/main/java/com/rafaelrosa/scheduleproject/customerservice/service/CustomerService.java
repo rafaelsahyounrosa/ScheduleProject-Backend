@@ -1,6 +1,7 @@
 package com.rafaelrosa.scheduleproject.customerservice.service;
 
 import com.rafaelrosa.commonsecurity.Authz;
+import com.rafaelrosa.scheduleproject.commonentities.CustomerSummaryDTO;
 import com.rafaelrosa.scheduleproject.customerservice.model.Customer;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.CreateCustomerRequest;
 import com.rafaelrosa.scheduleproject.customerservice.model.dto.CustomerSummary;
@@ -9,19 +10,29 @@ import com.rafaelrosa.scheduleproject.customerservice.model.dto.UpdateCustomerRe
 import com.rafaelrosa.scheduleproject.customerservice.repository.CustomerRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.StreamSupport;
 
 @Service
 public class CustomerService {
 
     private final CustomerRepository customerRepository;
     private final Authz authz;
+
+    //
+    private static final int MAX_PAGE_SIZE = 50;
+    private Pageable clamp(Pageable pageable) {
+        int size = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+        return PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
+    }
 
     public CustomerService(CustomerRepository customerRepository, Authz authz) {
         this.customerRepository = customerRepository;
@@ -83,15 +94,33 @@ public class CustomerService {
     }
 
     @Transactional(readOnly = true)
-    public Page<CustomerView> getAllCustomers(Pageable pageable){
+    public Page<CustomerView> getAllCustomers(String search, Pageable pageable){
+
+        Pageable safe = clamp(pageable);
+
+        String normalizedSearch = (search == null || search.trim().isEmpty()) ? null : search.trim();
+        Boolean hasSearch = normalizedSearch != null && normalizedSearch.length() > 2;
+
 
         if(authz.isAdmin()){
-            return customerRepository.findAll(pageable).map(CustomerView::from);
+
+            if(hasSearch){
+                return customerRepository.searchGlobal(normalizedSearch, safe).map(CustomerView::from);
+
+            }
+
+            return customerRepository.findAll(safe).map(CustomerView::from);
         }
 
         Long cid = authz.currentCompanyId();
         if(cid == null) throw new AccessDeniedException("Your token has no company scope");
-        return customerRepository.findAllByCompanyId(cid, pageable).map(CustomerView::from);
+
+        if(hasSearch){
+            return customerRepository.searchByCompany(cid, normalizedSearch, safe).map(CustomerView::from);
+
+        }
+
+        return customerRepository.findAllByCompanyId(cid, safe).map(CustomerView::from);
 
     }
 
@@ -127,4 +156,27 @@ public class CustomerService {
         if (!cid.equals(id)) throw new AccessDeniedException("Forbidden company");
         return customerRepository.findByIdAndCompanyId(id, cid).map(CustomerSummary::from);
     }
+
+    @Transactional(readOnly = true)
+    public List<CustomerSummaryDTO> getSummaryBatch(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return List.of();
+
+
+        if (authz.isAdmin()) {
+            return StreamSupport.stream(customerRepository.findAllById(ids).spliterator(), false)
+                    .map(c -> new CustomerSummaryDTO(
+                            c.getId(),
+                            c.getFirstName() + " " + c.getLastName()
+                    ))
+                    .toList();
+        }
+
+        Long cid = authz.currentCompanyId();
+        if (cid == null) throw new AccessDeniedException("Your token has no company scope");
+
+        return customerRepository.findByCompanyIdAndIdIn(cid, ids).stream()
+                .map(c -> new CustomerSummaryDTO(c.getId(), c.getFirstName() + " " + c.getLastName()))
+                .toList();
+    }
+
 }

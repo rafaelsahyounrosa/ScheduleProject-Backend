@@ -3,10 +3,11 @@ package com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.Scheduling;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public record ScheduleView(
         Long id,
-        LocalDate startTime,
+        LocalDateTime startTime,
         String description,
         String status,
         Long customerId,
