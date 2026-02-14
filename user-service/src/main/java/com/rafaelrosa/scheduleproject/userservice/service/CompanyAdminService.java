@@ -9,23 +9,34 @@ import com.rafaelrosa.scheduleproject.userservice.model.Company;
 import com.rafaelrosa.scheduleproject.userservice.model.User;
 import com.rafaelrosa.scheduleproject.userservice.repository.CompanyRepository;
 import com.rafaelrosa.scheduleproject.userservice.repository.UserRepository;
+import com.rafaelrosa.scheduleproject.userservice.security.Authz;
 import com.rafaelrosa.scheduleproject.userservice.utils.PasswordUtils;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CompanyAdminService {
 
     private final UserRepository userRepository;
     private final CompanyRepository companyRepository;
+    private final Authz authz;
+
+    private static final int MAX_PAGE_SIZE = 50;
+    private Pageable clamp(Pageable pageable) {
+        int size = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+        return PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
+    }
 
 
-    public CompanyAdminService(UserRepository userRepository, CompanyRepository companyRepository) {
+    public CompanyAdminService(UserRepository userRepository, CompanyRepository companyRepository, Authz authz) {
         this.userRepository = userRepository;
         this.companyRepository = companyRepository;
+        this.authz = authz;
     }
 
     public UserView create(CreateCompanyAdminRequest req){
@@ -70,8 +81,35 @@ public class CompanyAdminService {
         userRepository.delete(u);
     }
 
-    public Page<UserView> findAllByRole(Pageable pageable){
-        return userRepository.findAllByRole(Roles.COMPANY_ADMIN, pageable)
+    @Transactional(readOnly = true)
+    public Page<UserView> findAllByRole(String search, Pageable pageable){
+
+        Pageable safe = clamp(pageable);
+
+        String normalizedSearch = (search == null || search.trim().isEmpty()) ? null : search.trim();
+        Boolean hasSearch = normalizedSearch != null && normalizedSearch.length() > 2;
+
+        if (authz.isAdmin()){
+
+            if(hasSearch){
+
+                return userRepository.searchGlobalByRole(normalizedSearch, safe, Roles.COMPANY_ADMIN).map(UserView::from);
+            }
+
+            return userRepository.findAllByRole(Roles.COMPANY_ADMIN, safe)
+                    .map(UserView::from);
+        }
+
+        Long cid = authz.currentCompanyId();
+        if(cid == null) throw new AccessDeniedException("Your token has no company scope");
+
+        if(hasSearch){
+            return userRepository.searchByCompanyAndRole(cid, Roles.COMPANY_ADMIN,normalizedSearch, safe)
+                    .map(UserView::from);
+
+        }
+
+        return userRepository.findAllByRoleAndCompany_Id(Roles.COMPANY_ADMIN ,cid, safe)
                 .map(UserView::from);
     }
 }

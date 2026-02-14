@@ -1,6 +1,8 @@
 package com.rafaelrosa.scheduleproject.schedulingservicecreation.service;
 
 import com.rafaelrosa.commonsecurity.Authz;
+import com.rafaelrosa.scheduleproject.commonentities.CustomerDTO;
+import com.rafaelrosa.scheduleproject.commonentities.PageResponse;
 import com.rafaelrosa.scheduleproject.commonentities.enums.SchedulingStatus;
 import com.rafaelrosa.scheduleproject.commonentities.exceptions.NotFoundException;
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.feign.CompanyClient;
@@ -13,11 +15,13 @@ import com.rafaelrosa.scheduleproject.schedulingservicecreation.model.dto.Update
 import com.rafaelrosa.scheduleproject.schedulingservicecreation.repository.SchedulingRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -39,6 +43,12 @@ public class SchedulingService {
     // pode trocar por Caffeine/Cacheable depois
     private final Map<Long, String> customerNameCache = new ConcurrentHashMap<>();
     private final Map<Long, String> companyNameCache  = new ConcurrentHashMap<>();
+
+    private static final int MAX_PAGE_SIZE = 50;
+    private Pageable clamp(Pageable pageable) {
+        int size = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+        return PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
+    }
 
     public SchedulingService(SchedulingRepository schedulingRepository, CustomerClient customerClient, CompanyClient companies, Authz authz, SchedulePresenter presenter) {
         this.schedulingRepository = schedulingRepository;
@@ -77,14 +87,53 @@ public class SchedulingService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ScheduleView> findAll(Pageable pageable) {
+    public Page<ScheduleView> findAll(String search, Pageable pageable) {
 
-        Page<Scheduling> page = authz.isAdmin()
-                ? schedulingRepository.findAll(pageable)
-                : schedulingRepository.findAllByCompanyId(requireCompany(), pageable);
+        Pageable safe = clamp(pageable);
 
-        return page.map(presenter::toView);
+        String normalizedSearch = (search == null || search.trim().isEmpty())
+                ? null
+                : search.trim();
+
+        boolean hasSearch = normalizedSearch != null && normalizedSearch.length() > 2;
+
+        Page<Scheduling> page;
+
+        // Sem search
+        if (!hasSearch) {
+            if (authz.isAdmin()) {
+                page = schedulingRepository.findAll(safe);
+            } else {
+                Long cid = requireCompanyId();
+                page = schedulingRepository.findAllByCompanyId(cid, safe);
+            }
+            return presenter.toViewPage(page);
+        }
+
+        // Com search: resolve customerIds via Feign (limitado)
+        List<Long> customerIds = resolveCustomerIds(normalizedSearch);
+
+        // Aplica query correta (admin vs escopado)
+        if (authz.isAdmin()) {
+            if (customerIds.isEmpty()) {
+                page = schedulingRepository.searchGlobalLocal(normalizedSearch, safe);
+            } else {
+                page = schedulingRepository.searchGlobal(normalizedSearch, customerIds, safe);
+            }
+            return presenter.toViewPage(page);
+        }
+
+        Long cid = requireCompanyId();
+
+        if (customerIds.isEmpty()) {
+            page = schedulingRepository.searchByCompanyLocal(cid, normalizedSearch, safe);
+        } else {
+            page = schedulingRepository.searchByCompany(cid, normalizedSearch, customerIds, safe);
+        }
+
+        return presenter.toViewPage(page);
     }
+
 
     @Transactional(readOnly = true)
     public ScheduleView findById(Long id) {
@@ -153,4 +202,25 @@ public class SchedulingService {
             return "Company #" + id; // fallback
         }
     }
+
+    // helper
+    private Long requireCompanyId() {
+        Long cid = authz.currentCompanyId();
+        if (cid == null) throw new AccessDeniedException("Your token has no company scope");
+        return cid;
+    }
+
+    private List<Long> resolveCustomerIds(String search) {
+        try {
+            PageResponse<CustomerDTO> page = customers.findAll(search, 0, 100, "lastName,asc");
+            if (page.getContent() == null) return List.of();
+            return page.getContent().stream()
+                    .map(CustomerDTO::getId)
+                    .distinct()
+                    .toList();
+        } catch (Exception e) {
+            return List.of(); // fallback: search local
+        }
+    }
+
 }

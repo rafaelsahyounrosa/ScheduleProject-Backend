@@ -11,9 +11,10 @@ import com.rafaelrosa.scheduleproject.userservice.repository.UserRepository;
 import com.rafaelrosa.scheduleproject.userservice.security.Authz;
 import com.rafaelrosa.scheduleproject.userservice.utils.PasswordUtils;
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
@@ -23,13 +24,19 @@ import java.nio.file.AccessDeniedException;
 @Service
 public class CollaboratorService {
 
-    private final UserRepository users;
-    private final CompanyRepository companies;
+    private final UserRepository userRepository;
+    private final CompanyRepository companyRepository;
     private final Authz authz;
 
+    private static final int MAX_PAGE_SIZE = 50;
+    private Pageable clamp(Pageable pageable) {
+        int size = Math.min(pageable.getPageSize(), MAX_PAGE_SIZE);
+        return PageRequest.of(pageable.getPageNumber(), size, pageable.getSort());
+    }
+
     public CollaboratorService(UserRepository users, CompanyRepository companies, Authz authz) {
-        this.users = users;
-        this.companies = companies;
+        this.userRepository = users;
+        this.companyRepository = companies;
         this.authz = authz;
     }
 
@@ -55,7 +62,7 @@ public class CollaboratorService {
         }
 
 
-        Company c = companies.findById(targetCompanyId)
+        Company c = companyRepository.findById(targetCompanyId)
                 .orElseThrow(() -> new EntityNotFoundException("Company Not Found."));
 
         User u = new User();
@@ -66,13 +73,13 @@ public class CollaboratorService {
         u.setRole(Roles.COLLABORATOR.name());
         u.setCompany(c);
 
-        return UserView.from(users.save(u));
+        return UserView.from(userRepository.save(u));
     }
 
     @Transactional
     public UserView update(Long id, UpdateCollaboratorRequest req) {
 
-        User u = users.findById(id)
+        User u = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found."));
 
         //TODO VERIFICAR.
@@ -94,7 +101,7 @@ public class CollaboratorService {
 
         if (req.name() != null) u.setUsername(req.name());
         if (req.email() != null) u.setEmail(req.email());
-        return UserView.from(users.save(u));
+        return UserView.from(userRepository.save(u));
     }
 
     @Transactional
@@ -102,10 +109,10 @@ public class CollaboratorService {
 
         try {
 
-        User u = users.findById(id)
+        User u = userRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("User Not Found."));
 
-        if(u.getRole().equals(Roles.COLLABORATOR.name())) {
+        if(!u.getRole().equals(Roles.COLLABORATOR.name())) {
             throw new AccessDeniedException("You are not allowed to delete Collaborator.");
         }
 
@@ -117,22 +124,37 @@ public class CollaboratorService {
             throw new RuntimeException(e);
         }
 
-        users.deleteById(id);
+        userRepository.deleteById(id);
     }
 
-    @Transactional
-    public Page<UserView> list(Pageable pageable) {
+    @Transactional(readOnly = true)
+    public Page<UserView> list(String search, Pageable pageable) {
+
+        Pageable safe = clamp(pageable);
+
+        String normalizedSearch = (search == null || search.trim().isEmpty()) ? null : search.trim();
+        Boolean hasSearch = normalizedSearch != null && normalizedSearch.length() > 2;
 
         try {
             if (authz.isAdmin()) {
-                return users.findAllByRole(Roles.COLLABORATOR, pageable).map(UserView::from);
+
+                if(hasSearch) {
+                    return userRepository.searchGlobalByRole(normalizedSearch, safe, Roles.COLLABORATOR).map(UserView::from);
+                }
+
+                return userRepository.findAllByRole(Roles.COLLABORATOR, pageable).map(UserView::from);
             }
+
             Long cid = authz.currentCompanyId();
-            if (cid == null) {
-                throw new AccessDeniedException("Your token has no company scope.");
-            } else {
-                return users.findAllByRoleAndCompany_Id(Roles.COLLABORATOR, cid, pageable).map(UserView::from);
+            if(cid == null) throw new AccessDeniedException("Your token has no company scope");
+
+            if(hasSearch){
+                return userRepository.searchByCompanyAndRole(cid, Roles.COLLABORATOR,normalizedSearch, safe)
+                        .map(UserView::from);
             }
+            return userRepository.findAllByRoleAndCompany_Id(Roles.COLLABORATOR, cid, safe)
+                    .map(UserView::from);
+
         } catch (AccessDeniedException e) {
             throw new RuntimeException(e);
         }

@@ -20,4 +20,24 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
     Page<Company> findOneAsPage(@Param("id") Long id, Pageable pageable);
 
     Optional<Company> findByName(String name);
+
+    @Query("""
+        select c from Company c
+        where
+            lower(c.name) like lower(concat('%', :search, '%'))
+    """)
+    Page<Company> searchGlobal(@Param("search") String search, Pageable pageable);
+
+    @Query("""
+        select c from Company c
+        where c.id = :companyId
+          and (
+                lower(c.name) like lower(concat('%', :search, '%'))
+          )
+    """)
+    Page<Company> searchByCompany(
+            @Param("companyId") Long companyId,
+            @Param("search") String search,
+            Pageable pageable
+    );
 }

@@ -1,5 +1,6 @@
 package com.rafaelrosa.scheduleproject.userservice.controller;
 
+import com.rafaelrosa.scheduleproject.commonentities.CompanySummaryDTO;
 import com.rafaelrosa.scheduleproject.userservice.dto.CompanySummary;
 import com.rafaelrosa.scheduleproject.userservice.dto.CompanyView;
 import com.rafaelrosa.scheduleproject.userservice.dto.CreateCompanyRequest;
@@ -13,14 +14,16 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/companies")
 public class CompanyController {
 
     private final CompanyService companyService;
 
-    public CompanyController(CompanyService companyService, CompanyService companyService1) {
-        this.companyService = companyService1;
+    public CompanyController(CompanyService companyService) {
+        this.companyService = companyService;
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -32,8 +35,9 @@ public class CompanyController {
 
     @PreAuthorize("hasRole('COMPANY_ADMIN') or hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<Page<CompanyView>> getCompanies(Pageable pageable) {
-        return ResponseEntity.status(HttpStatus.OK).body(companyService.findAll(pageable));
+    public ResponseEntity<Page<CompanyView>> getCompanies(@RequestParam(required = false) String search,
+            Pageable pageable) {
+        return ResponseEntity.status(HttpStatus.OK).body(companyService.findAll(search, pageable));
     }
 
     @PreAuthorize("hasRole('COMPANY_ADMIN') or hasRole('ADMIN')")
@@ -54,5 +58,11 @@ public class CompanyController {
         //TODO remover log
         System.out.println("[COMPANY-SUMMARY] auth= " + request.getHeader("Authorization"));
         return ResponseEntity.of(companyService.findSummaryScoped(id));
+    }
+
+    @PreAuthorize("hasRole('COMPANY_ADMIN') or hasRole('ADMIN')")
+    @GetMapping("/summary/batch")
+    public List<CompanySummaryDTO> getCompanySummaries(@RequestParam List<Long> ids) {
+        return companyService.getSummariesBatch(ids);
     }
 }
